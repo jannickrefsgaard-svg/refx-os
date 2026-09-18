@@ -40,16 +40,10 @@ stop failures are reported together.
 
 ### Task state machine (ADR 0003)
 
-```
-CREATED ─► QUEUED ─► PLANNING ─► EXECUTING ─► COMPLETED
-              ▲  └──────────────►   │  ▲
-              │                     ▼  │
-            PAUSED ◄────────────── (EXECUTING)
-                                    │
-           WAITING ◄── PLANNING / EXECUTING ; WAITING ─► PLANNING / EXECUTING
-FAILED ◄── PLANNING / EXECUTING / WAITING
-CANCELLED ◄── any non-terminal state
-```
+Happy path: `CREATED → QUEUED → PLANNING → EXECUTING → COMPLETED`.
+Simple commands may go `QUEUED → EXECUTING` directly. `WAITING` (user input,
+permission) and `PAUSED` (resource manager) branch off and return.
+Any non-terminal state can go to `CANCELLED`. Full table in ADR 0003.
 
 Terminal: `COMPLETED`, `FAILED`, `CANCELLED`. `COMPLETED` is reachable only
 from `EXECUTING`, so a task cannot be marked done without having run (§35).
