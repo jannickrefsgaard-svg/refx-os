@@ -1,0 +1,19 @@
+[package]
+name = "refx-daemon"
+description = "REFX runtime host process."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "refxd"
+path = "src/main.rs"
+
+[dependencies]
+refx-core = { path = "../refx-core" }
+refx-platform = { path = "../refx-platform" }
+tracing.workspace = true
+
+[lints]
+workspace = true

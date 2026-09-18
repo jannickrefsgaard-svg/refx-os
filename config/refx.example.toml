@@ -1,0 +1,14 @@
+# REFX configuration (Phase 0).
+# Copy to refx.toml next to refxd, or pass --config <path>.
+# Unknown keys are rejected on startup.
+
+[general]
+instance_name = "REFX"
+# Relative paths resolve against this file's directory.
+data_dir = "data"
+
+[logging]
+# A level (trace|debug|info|warn|error) or filter directives,
+# e.g. "info,refx_core=debug". Overridden by the REFX_LOG env var.
+level = "info"
+ansi = true

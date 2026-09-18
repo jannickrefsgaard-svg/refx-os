@@ -1,0 +1,13 @@
+[package]
+name = "refx-platform"
+description = "Platform interface isolating REFX Core from the host OS (Windows adapter lands in Phase 2)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+
+[lints]
+workspace = true
