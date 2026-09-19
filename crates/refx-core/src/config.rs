@@ -55,7 +55,9 @@ pub enum ConfigError {
     #[error("cannot read config file {path}: {source}")]
     Io { path: PathBuf, source: std::io::Error },
     #[error("invalid config file {path}: {source}")]
-    Parse { path: PathBuf, source: toml::de::Error },
+    // Boxed: `toml::de::Error` is large and would bloat every
+    // `Result<_, ConfigError>` (clippy::result_large_err).
+    Parse { path: PathBuf, source: Box<toml::de::Error> },
     #[error("invalid config value `{key}`: {message}")]
     Invalid { key: &'static str, message: String },
 }
@@ -79,8 +81,10 @@ impl RefxConfig {
     pub fn load(path: &Path) -> Result<(Self, ConfigSource), ConfigError> {
         let (mut cfg, source) = match std::fs::read_to_string(path) {
             Ok(text) => {
-                let mut cfg = Self::from_toml_str(&text)
-                    .map_err(|source| ConfigError::Parse { path: path.to_owned(), source })?;
+                let mut cfg = Self::from_toml_str(&text).map_err(|source| ConfigError::Parse {
+                    path: path.to_owned(),
+                    source: Box::new(source),
+                })?;
                 if cfg.general.data_dir.is_relative() {
                     if let Some(dir) = path.parent() {
                         cfg.general.data_dir = dir.join(&cfg.general.data_dir);
@@ -176,6 +180,23 @@ mod tests {
         for bad in ["", "verbose", "info,refx_core=loud"] {
             assert!(validate_log_filter(bad).is_err(), "{bad} should be invalid");
         }
+    }
+
+    #[test]
+    fn parse_error_keeps_message_and_source_chain() {
+        use std::error::Error as _;
+        let path = std::env::temp_dir()
+            .join(format!("refx-config-parse-test-{}.toml", std::process::id()));
+        std::fs::write(&path, "[logging]\nlevle = \"x\"\n").expect("write temp config");
+        let err = RefxConfig::load(&path).expect_err("typo must be rejected");
+        let _ = std::fs::remove_file(&path);
+
+        assert!(matches!(err, ConfigError::Parse { .. }));
+        let msg = err.to_string();
+        assert!(msg.starts_with("invalid config file "), "{msg}");
+        assert!(msg.contains("unknown field `levle`"), "{msg}");
+        let source = err.source().expect("parse error exposes its source");
+        assert!(source.to_string().contains("unknown field `levle`"));
     }
 
     #[test]
